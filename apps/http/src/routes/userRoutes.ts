@@ -1,29 +1,73 @@
 import { Response, Router , Request } from "express";
 import prisma from '@repo/db/client';
+import { UserInfoRequest } from "../types";
+import { getUserFromToken } from "../middleware/userInfo";
+
+
 export const userRouter = Router();
 
-
-userRouter.get("/",async(req:Request , res:Response) => {
-    
-    res.json("Api is working fine ")
+userRouter.get("/" , getUserFromToken ,async(req:UserInfoRequest , res:Response) => {
+    if(!req.user) {
+        res.status(401).json({message:"user not found"});
+    }
+    const user = await prisma.user.findUnique({
+        where: {
+            id:req.user.id
+        }
+    }).catch((e)=> {
+        console.log("error ->",e);
+        res.json({message:"Something went wrong"})
+    })
+    res.json({data:user})
 });
 
-userRouter.get('/rooms', async(req:Request , res:Response) => {
-    
-    res.json("Send all joined room");
+userRouter.get('/rooms' , getUserFromToken, async(req:UserInfoRequest , res:Response) => {
+    if(!req.user){
+        res.status(401).json({message:"User not found."})
+    }
+    const userRooms = await prisma.roomUser.findMany({
+        where: {
+            userId: req.user.id
+        }
+    });
+    if(!userRooms) {
+        res.json({message:"No rooms found"})
+    }
+  
+    res.status(200).json({data:userRooms});
 })
 
 
 userRouter.post('/join-room', async(req:Request , res:Response) => {
-    res.json("Join a room");
+    const {roomId , userId} = req.body;
+    await prisma.roomUser.create({
+        data : {
+            roomId,
+            userId,
+            role: "USER"
+        }
+    }).catch((e)=> {
+        console.log("error while joining the room -> ",e);
+        res.json({message:"Something went wrong"});
+    })
+    res.json({message:"Successfully joined the room"});
 })
 
 userRouter.post('/create-room' , async(req:Request , res:Response) => {
-    res.json("create a room");
+   const {name , map , userId } = req.body;
+   const newRoom = await prisma.rooms.create({
+    data : {
+        name,
+        map,
+        users : {
+            create: {
+                userId: userId,
+                role: "ADMIN"
+            }
+        }
+    }
+   })
+    res.json({data:newRoom});
 })
 
-userRouter.get('/:id',async(req:Request , res:Response) => {
-    const {id} = req.query;
-    res.json(`Getting information for user ${id}`);
-})
 

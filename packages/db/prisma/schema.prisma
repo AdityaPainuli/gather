@@ -32,7 +32,7 @@ model RoomUser {
     user      User     @relation(fields: [userId], references: [id])
     room      Rooms    @relation(fields: [roomId], references: [id])
 
-    @@unique([userId, roomId])
+    @@unique([role , userId, roomId])
 }
 
 enum Role {

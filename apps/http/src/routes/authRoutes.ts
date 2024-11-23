@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 const authRouter = Router();
 
 const generateAccessToken = (user: { id: string; email: string; name: string }) => {
-  return jwt.sign(user, process.env.TOKEN_SECRET as string, { expiresIn: "1h" });
+  return jwt.sign(user, process.env.TOKEN_SECRET as string, { expiresIn: "7d" });
 };
 
 authRouter.post("/register", async (req: Request, res: Response): Promise<void> => {

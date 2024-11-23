@@ -1,3 +1,5 @@
+import { Request } from "express"
+
 interface User {
     id:string,
     posX:number,
@@ -19,4 +21,8 @@ interface Room {
     roomName:string, 
     users:User[],
     map:Obstacle[]
+}
+
+interface UserInfoRequest extends Request {
+    user?: any
 }
