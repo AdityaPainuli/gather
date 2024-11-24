@@ -5,18 +5,29 @@ import { UserInfoRequest } from "../types";
 
 const roomRouter = Router();
 
-roomRouter.get('/:roomId',async(req:Request , res:Response)=> {
-    const {roomId} = req.query;
-    const room = await prisma.rooms.findUnique({
-        where: {
-            id: roomId as string
+roomRouter.get('/:roomId', async (req: Request, res: Response) => {
+    try {
+        const { roomId } = req.params; 
+        if (!roomId) {
+            res.status(400).json({ message: "roomId is required" });
         }
-    });
-    if(!room) {
-        res.status(401).json({message:"No room found"});
+
+        const room = await prisma.rooms.findUnique({
+            where: {
+                id: roomId as string,
+            },
+        });
+
+        if (!room) {
+            res.status(404).json({ message: "No room found" }); 
+        }
+
+        res.status(200).json({ data: room });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-    res.status(200).json({data:room});
-})
+});
 
 roomRouter.get('/:roomId/user-info',async(req:Request , res:Response) => {
     const {roomId} = req.query;

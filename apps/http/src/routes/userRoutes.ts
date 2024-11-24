@@ -13,6 +13,14 @@ userRouter.get("/" , getUserFromToken ,async(req:UserInfoRequest , res:Response)
     const user = await prisma.user.findUnique({
         where: {
             id:req.user.id
+        },
+        include : {
+            roomRoles : {
+                select: {
+                    role:true,
+                    room:true
+                }
+            }
         }
     }).catch((e)=> {
         console.log("error ->",e);
@@ -28,6 +36,9 @@ userRouter.get('/rooms' , getUserFromToken, async(req:UserInfoRequest , res:Resp
     const userRooms = await prisma.roomUser.findMany({
         where: {
             userId: req.user.id
+        },
+        include : {
+            room: true
         }
     });
     if(!userRooms) {

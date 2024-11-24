@@ -1,3 +1,5 @@
+import { Room, User } from "../types";
+
 export class RoomManager {
     private Rooms: Map<string, Room> = new Map();
     private static instance: RoomManager;
