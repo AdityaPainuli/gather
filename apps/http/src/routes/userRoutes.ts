@@ -18,8 +18,13 @@ userRouter.get("/" , getUserFromToken ,async(req:UserInfoRequest , res:Response)
             roomRoles : {
                 select: {
                     role:true,
-                    room:true
-                }
+                    room:{
+                        include : {
+                            users : true
+                        }
+                    }
+                },
+                
             }
         }
     }).catch((e)=> {
@@ -80,5 +85,3 @@ userRouter.post('/create-room' , async(req:Request , res:Response) => {
    })
     res.json({data:newRoom});
 })
-
-

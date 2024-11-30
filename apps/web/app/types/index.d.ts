@@ -4,7 +4,7 @@ interface User {
     posX:number,
     posY:number,
     socket:WebSocket,
-    roomsUser:RoomUser[]
+    roomRoles:RoomUser[],
 }
 
 interface Obstacle {
@@ -15,7 +15,7 @@ interface Obstacle {
 }
 
 interface Room {
-    roomId:string , 
+    id:string , 
     name:string,
     users:User[],
     map:Obstacle[],

@@ -3,9 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  let randomXPosition = Math.random() * (window.innerWidth);
-  let randomYPosition = Math.random() * (window.innerHeight);
-  const [position, setPosition] = useState({ x: randomXPosition,  y: randomYPosition});
+
  
   const [currentUser , setCurrentUser] = useState<User | null>(user);
   const [room , setRoom] = useState<Room | null>();
@@ -18,10 +16,14 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      setPosition((prev) => ({
-        x: Math.min(prev.x, canvas.width - dotRadius),
-        y: Math.min(prev.y, canvas.height - dotRadius),
-      }));
+      setCurrentUser((user) => {
+        if(!user) return user;
+        return {
+          ...user,
+          posX: Math.min(user.posX , canvas.width - dotRadius),
+          posY: Math.min(user.posY , canvas.height - dotRadius)
+        }
+      })
     }
   };
 
@@ -50,7 +52,7 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
     currentUser.socket.send(JSON.stringify({
       type:"updateUser",
       userId:currentUser.id,
-      roomId:room.roomId,
+      roomId:room.id,
       posX:currentUser.posX,
       posY:currentUser.posY
     }));
@@ -96,7 +98,7 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
         })
 
         // drawing of users.
-        room?.users.forEach((user)=> {
+        room?.users?.forEach((user)=> {
           ctx.beginPath();
           ctx.arc(user.posX , user.posY , dotRadius , 0 , Math.PI * 2);
           ctx.fillStyle = user.id ? 'blue': 'red';
@@ -104,34 +106,75 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
           ctx.closePath();
         })
 
-        ctx.beginPath();
-        ctx.arc(position.x, position.y, dotRadius, 0, Math.PI * 2);
-        ctx.fillStyle = "red"; 
-        ctx.fill();
-        ctx.closePath();
+       if(currentUser) {
+          ctx.beginPath();
+          ctx.arc(currentUser.posX, currentUser.posY, dotRadius, 0, Math.PI * 2);
+          ctx.fillStyle = "red"; 
+          ctx.fill();
+          ctx.closePath();
+       }
       }
     }
   };
 
-  useEffect(() => {
-    draw();
-  }, [room , currentUser]);
+  const fetchRandomPosition = async() => {
+    if(!currentUser || !room) return;
+    try {
+      const req=  await fetch('http://localhost:8080/api/room/random-position', {
+        method: "POST",
+        headers: {
+          'Content-type':'application/json'
+        },
+        body: JSON.stringify({ user:currentUser , room , windowWidth:window.innerWidth , windowHeight:window.innerHeight })
+      });
+     
+      const {message,data:updatedUser} = await req.json();
+      setCurrentUser((prevUser) => {
+        if(!prevUser) return prevUser;
+        return {
+          ...prevUser,
+          posX:updatedUser.posX,
+          posY:updatedUser.posY
+        }
+      });
+      draw();
+   
+     
+    }catch(e) {
+      console.log("Error ->",e);
+    } 
+  }
+
+
+ useEffect(() => {
+  if(room) {
+    fetchRandomPosition();
+  }
+ },[room]);
+
+ useEffect(() => {
+  draw();
+ },[room,currentUser]);
+
+
 
   useEffect(() => {
     const fetchRoom = async() => {
       const req = await fetch(`http://localhost:8080/api/room/${roomId}`);
       const {data}: {data:Room} = await req.json();
       setRoom(data);
+      console.log(data)
 
       if(!currentUser) return;
       setCurrentUser((u) => {
         if(!u) return null;
         return {...u , socket: new WebSocket("wss://localhost:8081")}
       })
-      currentUser.socket.onmessage = handleSocketMessage;
+      // currentUser.socket.onmessage = handleSocketMessage;
       setCurrentUser(currentUser)
     }
 
+   
     fetchRoom();
     resizeCanvas();
 

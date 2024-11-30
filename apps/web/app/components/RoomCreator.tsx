@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react"
 
 export function RoomCreator({user}:{user:User}) {
@@ -9,6 +10,7 @@ export function RoomCreator({user}:{user:User}) {
     const [obstacles , setObstacles] = useState<Obstacle[]>([]);
     const [isDrawing , setIsDrawing] = useState(false);
     const [currentObstacle , setCurrentObstacle] = useState<Obstacle | null>(null);
+    const router = useRouter();
 
 
     function resizeCanvas() {
@@ -85,16 +87,23 @@ export function RoomCreator({user}:{user:User}) {
         return;
        }
        // wrong api route
-       const req = await fetch('http://localhost:8080/api/user/create-room', {
-        method:"POST",
-        headers: {
-            "Content-type":"application/json"
-        },
-        body: JSON.stringify({name:roomName , map:obstacles , userId:user.id})
-       });
-       const {data:room}: {data:Room} = await req.json();
-       setObstacles(room.map);
-       setRoomName(room.name)
+      try {
+        const req = await fetch('http://localhost:8080/api/user/create-room', {
+            method:"POST",
+            headers: {
+                "Content-type":"application/json"
+            },
+            body: JSON.stringify({name:roomName , map:obstacles , userId:user.id})
+           })
+           const {data:room}: {data:Room} = await req.json();
+           setObstacles(() => room.map);
+           setRoomName(() => room.name);
+           alert("Room is successfully created");
+           router.push('/');
+      }catch(e) {
+        console.log(e);
+        alert("Room is not saving.")
+      }
     }
 
     useEffect(() => {
@@ -145,7 +154,7 @@ export function RoomCreator({user}:{user:User}) {
           onChange={(e) => setRoomName(e.target.value)}
           style={{ marginBottom: "10px", padding: "5px", width: "100%" }}
         />
-        <button onClick={handleSaveRoom} style={{ padding: "5px 10px" }}>
+        <button onClick={handleSaveRoom} style={{ padding: "5px 10px " }} className="bg-orange-600 text-white rounded-md cursor-pointer hover:bg-orange-700">
           Save Room
         </button>
       </div>
