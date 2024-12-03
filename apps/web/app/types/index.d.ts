@@ -8,6 +8,7 @@ interface User {
 }
 
 interface Obstacle {
+    id:string,
     width:number,
     height:number,
     posX:number,

@@ -6,7 +6,6 @@ import bcrypt from "bcrypt";
 const authRouter = Router();
 
 const generateAccessToken = (user: { id: string; email: string; name: string }) => {
-  console.log("token-secret ->",process.env.TOKEN_SECRET)
   return jwt.sign(user, process.env.TOKEN_SECRET as string, { expiresIn: "7d" });
 };
 

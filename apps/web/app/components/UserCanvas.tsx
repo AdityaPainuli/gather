@@ -1,15 +1,16 @@
 "use client"
+import { SUPPORTED_NATIVE_MODULES } from 'next/dist/build/webpack/plugins/middleware-plugin';
 import React, { useEffect, useRef, useState } from 'react';
+import {detectCollision} from '@repo/collision-computation/collisionDetection';
 
 const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
  
   const [currentUser , setCurrentUser] = useState<User | null>(user);
   const [room , setRoom] = useState<Room | null>();
 
   const dotRadius = 10; 
-
+  const speed = 10;
   const resizeCanvas = () => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -27,43 +28,47 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
     }
   };
 
+
   const handleKeyDown = (e: KeyboardEvent) => {
-    if(!currentUser || !room) return;
-    const step = 10;
-    let {posX , posY} = currentUser;
-
-    switch(e.key) {
-      case "ArrowUp":
-        posY = Math.max(posY - step, dotRadius);
-        break;
-      case "ArrowDown":
-        posY = Math.min(posY + step, window.innerHeight - dotRadius);
-        break;
-      case "ArrowLeft":
-        posX = Math.max(posX - step, dotRadius);
-        break;
-      case "ArrowRight":
-        posX = Math.min(posX + step, window.innerWidth - dotRadius);
-        break;
+    if(!currentUser) return;
+    let predictedPosition:number;
+    console.log("handleKeyDown",e.key);
+    if(e.key === "ArrowLeft") {
+       predictedPosition = currentUser.posX - speed;
+      if(predictedPosition <= dotRadius) return;
+      if(!detectCollision(room,{...currentUser,posX:predictedPosition},dotRadius)) return;
+      setCurrentUser((prevCurrentUser)=> {
+        if(!prevCurrentUser) return prevCurrentUser;
+        return {...prevCurrentUser,posX:predictedPosition}
+      })
     }
-    const updatedUser = {...currentUser, posX , posY};
-    setCurrentUser(updatedUser);
-
-    currentUser.socket.send(JSON.stringify({
-      type:"updateUser",
-      userId:currentUser.id,
-      roomId:room.id,
-      posX:currentUser.posX,
-      posY:currentUser.posY
-    }));
-
-    setRoom((prev)=> {
-      if(!prev) return null;
-      return {
-        ...prev,
-        users: prev.users.map((u)=> u.id === currentUser.id ? updatedUser : u)
-      }
-    })
+    if(e.key === "ArrowRight") {
+      predictedPosition = currentUser.posX + speed;
+      if(predictedPosition >= window.innerWidth - dotRadius) return;
+      if(!detectCollision(room,{...currentUser,posX:predictedPosition},dotRadius)) return;
+      setCurrentUser((prevCurrentUser)=> {
+        if(!prevCurrentUser) return prevCurrentUser;
+        return {...prevCurrentUser,posX:predictedPosition}
+      })
+    }
+    if(e.key === "ArrowUp") {
+      predictedPosition = currentUser.posY - speed;
+      if(predictedPosition <= dotRadius) return; 
+      if(!detectCollision(room,{...currentUser,posY:predictedPosition},dotRadius)) return;
+      setCurrentUser((prevCurrentUser) => {
+        if(!prevCurrentUser) return prevCurrentUser;
+        return {...prevCurrentUser , posY:predictedPosition}
+      })
+    }
+    if(e.key === "ArrowDown") {
+      predictedPosition = currentUser.posY + speed;
+      if(predictedPosition >= window.innerHeight - dotRadius)return;
+      if(!detectCollision(room,{...currentUser,posY:predictedPosition},dotRadius)) return;
+      setCurrentUser((prevCurrentUser) => {
+        if(!prevCurrentUser) return prevCurrentUser;
+        return {...prevCurrentUser , posY:prevCurrentUser.posY + speed}
+      })
+    }
   };
 
   const handleSocketMessage = (message:MessageEvent) => {
@@ -166,9 +171,10 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
       console.log(data)
 
       if(!currentUser) return;
+      //@ts-ignore
       setCurrentUser((u) => {
         if(!u) return null;
-        return {...u , socket: new WebSocket("wss://localhost:8081")}
+        return {...u , socket: 'sdf'}
       })
       // currentUser.socket.onmessage = handleSocketMessage;
       setCurrentUser(currentUser)
@@ -178,6 +184,10 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
     fetchRoom();
     resizeCanvas();
 
+  }, []);
+
+
+  useEffect(() => {
     window.addEventListener('resize', resizeCanvas); 
     window.addEventListener('keydown', handleKeyDown);
 
@@ -185,8 +195,7 @@ const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
       window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
-
+  },[handleKeyDown]);
   return (
     <canvas
       ref={canvasRef}

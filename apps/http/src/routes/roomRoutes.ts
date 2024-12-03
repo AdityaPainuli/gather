@@ -125,6 +125,28 @@ roomRouter.post('/join-room', async (req: Request, res: Response) => {
     } catch (e) {
         res.status(500).json({ message: "Internal server error", data: null });
     }
+});
+
+roomRouter.patch('/', async(req:Request, res:Response):Promise<void> => {
+    const {name , map , roomId} =  req.body;
+    if(!name ||  !map && !roomId) {
+        res.status(400).json({message:"Missing required fields"});
+    }
+    try {
+        const updatedRoom  = await prisma.rooms.update({
+            where: {
+                id:roomId
+            },
+            data: {
+                name:name,
+                map:map
+            }
+        })
+        res.status(200).json({message:"Updated data successfully",data:updatedRoom});
+    }catch(e) {
+        console.log(e);
+        res.status(500).json({message:"Internal server error"});
+    }
 })
 
 

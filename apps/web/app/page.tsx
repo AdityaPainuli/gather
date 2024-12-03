@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import "./globals.css";
 import { useCurrentUser } from "./hooks/getUserCurrent";
 import { useEffect, useState } from "react";
-import { Copy, Trash, UserPlus } from "lucide-react";
+import { Copy, Edit, Trash, UserPlus } from "lucide-react";
 import { validateEmail } from "../utils/email";
 import LoadingSpinner from "./components/loader";
 
@@ -121,8 +121,8 @@ export default function Home() {
     <div className="flex justify-between items-center">
       <h1 className="font-semibold text-xl">{room.name}</h1>
       <div className="flex space-x-2 items-center">
-        <button className="p-2  bg-orange-500 hover:bg-orange-600 text-white rounded-md">
-          <Copy color="white" size={15} />
+      <button onClick={() => router.push(`/room/edit/${room.id}`)} className="p-2  bg-orange-500 hover:bg-orange-600 text-white rounded-md">
+          <Edit color="white" size={15} />
         </button>
         <button
           onClick={() => handleDeletingRoom(room.id)}

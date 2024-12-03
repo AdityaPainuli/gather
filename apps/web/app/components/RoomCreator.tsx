@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react"
+import { generateRandomId } from "../../utils/randomId";
 
 export function RoomCreator({user}:{user:User}) {
    
@@ -48,11 +49,8 @@ export function RoomCreator({user}:{user:User}) {
         setIsDrawing(true);
         const rect = canvasRef.current?.getBoundingClientRect();
         if(rect) {
-            console.log("e-clientX ->",e.clientX);
-            console.log("e-clientY",e.clientY);
-            console.log("rectLeft ->",rect.left);
-            console.log("rectRight ->",rect.top);
             setCurrentObstacle({
+                id:generateRandomId(),
                 posX:e.clientX - rect.left,
                 posY:e.clientY - rect.top,
                 width: 0,
@@ -122,7 +120,7 @@ export function RoomCreator({user}:{user:User}) {
 
     return (
         <div>
-            <h1>Hello world</h1>
+          
             <canvas
             ref = {canvasRef}
             style={{
