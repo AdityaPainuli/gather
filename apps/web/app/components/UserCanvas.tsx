@@ -1,11 +1,11 @@
 "use client"
-import { SUPPORTED_NATIVE_MODULES } from 'next/dist/build/webpack/plugins/middleware-plugin';
 import React, { useEffect, useRef, useState } from 'react';
 import {detectCollision} from '@repo/collision-computation/collisionDetection';
 
 const UserCanvas = ({roomId , user}: {roomId:string , user:User | null}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
- 
+  const wsRef = useRef<WebSocket | null>(null);
+  
   const [currentUser , setCurrentUser] = useState<User | null>(user);
   const [room , setRoom] = useState<Room | null>();
 
